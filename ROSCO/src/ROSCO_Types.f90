@@ -7,6 +7,10 @@ USE, INTRINSIC :: ISO_C_Binding
 USE Constants
 IMPLICIT NONE
 
+#ifdef FLANG_COMPILER
+   TYPE(C_FUNPTR), PARAMETER     :: NULL_PROC_ADDR(3) = C_NULL_FUNPTR  !< this is a hack so the Flang compiler will initialize ProcAddr to C_NULL_FUNPTR in DLL_Type (remove if no longer needed)
+#endif
+
 TYPE, PUBLIC :: ControlParameters
     INTEGER(IntKi)                :: LoggingLevel                ! 0 - write no debug files, 1 - write standard output .dbg-file, 2 - write standard output .dbg-file and complete avrSWAP-array .dbg2-file
     INTEGER(IntKi)                :: F_LPFType                   ! Low pass filter on the rotor and generator speed {1 - first-order low-pass filter, 2 - second-order low-pass filter}, [rad/s]
@@ -324,7 +328,11 @@ END TYPE ErrorVariables
 TYPE, PUBLIC :: ExtDLL_Type
     INTEGER(C_INTPTR_T)           :: FileAddr                    ! The address of file FileName. (RETURN value from LoadLibrary ) [Windows]
     TYPE(C_PTR)                   :: FileAddrX = C_NULL_PTR      ! The address of file FileName. (RETURN value from dlopen ) [Linux]
-    TYPE(C_FUNPTR)                :: ProcAddr(3) = C_NULL_FUNPTR   ! The address of procedure ProcName. (RETURN value from GetProcAddress or dlsym) [initialized to Null for pack/unpack]
+#ifdef FLANG_COMPILER
+    TYPE(C_FUNPTR)                :: ProcAddr(3) = NULL_PROC_ADDR   ! The address of procedure ProcName. (RETURN value from GetProcAddress or dlsym) [initialized to Null for pack/unpack]
+#else
+    TYPE(C_FUNPTR)                :: ProcAddr(3) = C_NULL_FUNPTR ! The address of procedure ProcName. (RETURN value from GetProcAddress or dlsym) [initialized to Null for pack/unpack]
+#endif
     CHARACTER(1024)               :: FileName                    ! The name of the DLL file including the full path to the current working directory.
     CHARACTER(1024)               :: ProcName(3) = ""            ! The name of the procedure in the DLL that will be called.
 END TYPE ExtDLL_Type
